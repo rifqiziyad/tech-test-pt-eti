@@ -10,7 +10,7 @@
 
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rifqi - File Exploer</title>
+    <title>File Exploer</title>
     <style>
       .selected {
         background-color: rgba(142, 254, 181, 0.5);
@@ -20,83 +20,53 @@
   </head>
   <body>
     <div
-      class="container-fluid content vh-100 d-flex justify-content-center align-items-center"
+      class="container-fluid content vh-100 d-flex justify-content-center align-items-center flex-column"
     >
-      <!-- Button trigger modal -->
-      <button
-        type="button"
-        class="btn btn-primary"
-        data-bs-toggle="modal"
-        data-bs-target="#exampleModal"
-      >
-        Launch demo modal
+      <button type="button" class="btn btn-primary" onclick="inputDirectory()">
+        Show promt input folder
       </button>
+      <br />
+      <h2 id="text-error"></h2>
+      <br />
 
-      <!-- Modal -->
-      <div
-        class="modal fade"
-        id="exampleModal"
-        tabindex="-1"
-        aria-labelledby="exampleModalLabel"
-        aria-hidden="true"
-      >
-        <div
-          class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
-        >
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="btn btn-light">
-                <img
-                  src="./assets/arrow-alt-circle-left-solid.svg"
-                  alt="folder-icon"
-                  style="width: 45px"
-                />
-              </button>
+      <div style="width: 60vw; display: none" id="content">
+        <div class="d-flex">
+          <button type="button" class="btn btn-light" onclick="handleBack()">
+            <img
+              src="./assets/arrow-alt-circle-left-solid.svg"
+              alt="folder-icon"
+              style="width: 45px"
+            />
+          </button>
 
-              <!-- <span class="modal-title fs-5" id="exampleModalLabel">
-                Modal title
-              </span> -->
-              <h4 class="w-100 text-center">My Folder</h4>
-              <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              ></button>
-            </div>
-            <div class="modal-body" style="height: 380px">
-              <div>
-                <div class="row" id="row-folder" style="padding: 10px">
-                  <!-- <div id="baby" class="col-md-4">
-                    <div
-                      class="card-folder m-auto"
-                      id="folder-one"
-                      onclick="onClickFolder(event)"
-                    >
-                      <img
-                        src="./assets/folder-icon.png"
-                        class="img-fluid select-asset-list-item mw-90"
-                        style="max-width: 90%"
-                      />
-                    </div>
-                    <div class="caption text-center"><p>baby</p></div>
-                  </div> -->
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-warning" style="color: #fff">
-                Open
-              </button>
-              <button
-                type="button"
-                class="btn btn-light"
-                data-bs-dismiss="modal"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+          <h4 class="w-100 text-center">My Folder</h4>
+        </div>
+        <div>
+          <div
+            class="row"
+            id="row-folder"
+            style="
+              height: 380px;
+              padding: 10px;
+              overflow-y: auto;
+              overflow-x: hidden;
+            "
+          ></div>
+        </div>
+        <br />
+        <div class="d-flex justify-content-end">
+          <button
+            id="btn-open"
+            type="button"
+            class="btn btn-warning"
+            style="color: #fff; display: none"
+            onclick="handleOpen()"
+          >
+            Open
+          </button>
+          <button type="button" class="btn btn-light" onclick="handleCancel()">
+            Cancel
+          </button>
         </div>
       </div>
     </div>
@@ -106,7 +76,43 @@
       crossorigin="anonymous"
     ></script>
     <script>
-      function onClickFolder(id) {
+      let pathDirectory = [];
+
+      const elBtnOpen = document.getElementById("btn-open");
+
+      const inputDirectory = async () => {
+        const promt = prompt("Input Directory");
+        if (promt) {
+          const split = promt.split("\\");
+          pathDirectory = [...split];
+          pathDirectory[0] = pathDirectory[0] + "\\";
+          fetchFolder();
+        }
+      };
+
+      const fetchFolder = async () => {
+        const joinPath = pathDirectory.join("\\");
+        const fetchData = await fetch(`http://localhost:3000/?path=${joinPath}`)
+          .then((res) => {
+            return res.json();
+          })
+          .catch((err) => {
+            return [];
+          });
+
+        const ElContent = document.getElementById("content");
+        if (fetchData.data.length > 0) {
+          ElContent.style.display = null;
+          document.getElementById("text-error").innerHTML = "";
+        } else {
+          document.getElementById("text-error").innerHTML = fetchData.message;
+          ElContent.style.display = "none";
+        }
+
+        appendData(fetchData.data);
+      };
+
+      const onClickFolder = (id) => {
         const ElSelected = document.getElementsByClassName("selected");
         if (ElSelected.length > 0) {
           const arrEl = [...ElSelected];
@@ -114,37 +120,83 @@
             data.classList.remove("selected");
           });
         }
+
         const ElSelect = document.getElementById(id);
         ElSelect.classList.add("selected");
-      }
 
-      function onDobuleClick(event) {
-        console.log(event);
-      }
+        const dataset = JSON.parse(ElSelect.dataset.type);
+        if (dataset.type === "dir") elBtnOpen.style.display = "block";
+        if (dataset.type === "file") elBtnOpen.style.display = "none";
+      };
 
-      const data = ["cat", "boy", "rifqi", "ziyad", "imtinan", "qizi"];
-      const ElRowFolder = document.getElementById("row-folder");
-      data.map((data, index) => {
-        const newElement = document.createElement("div");
-        newElement.setAttribute("class", "col-md-4");
-        newElement.setAttribute("id", data);
-        newElement.setAttribute("onclick", `onClickFolder("${data}")`);
-        newElement.setAttribute("ondblclick", `onDobuleClick(event)`);
-        newElement.innerHTML = `<div
+      const onDobuleClick = (name, type) => {
+        if (type === "dir") {
+          pathDirectory.push(name);
+          fetchFolder();
+        }
+        elBtnOpen.style.display = "none";
+      };
+
+      const handleBack = () => {
+        pathDirectory.pop();
+        fetchFolder();
+        elBtnOpen.style.display = "none";
+      };
+
+      const handleOpen = () => {
+        const Elselected = document.getElementsByClassName("selected");
+        const dataset = JSON.parse(Elselected[0].dataset.type);
+        if (dataset.type === "dir") {
+          pathDirectory.push(dataset.name);
+          fetchFolder();
+        }
+        elBtnOpen.style.display = "none";
+      };
+
+      const handleCancel = () => {
+        document.getElementById("content").style.display = "none";
+      };
+
+      const appendData = (data) => {
+        const ElRowFolder = document.getElementById("row-folder");
+        ElRowFolder.innerHTML = "";
+        data.map((data, index) => {
+          const newElement = document.createElement("div");
+          newElement.setAttribute("data-type", JSON.stringify(data));
+          newElement.setAttribute("class", "col-md-4");
+          newElement.setAttribute("id", data.name);
+          newElement.setAttribute("onclick", `onClickFolder("${data.name}")`);
+          newElement.setAttribute(
+            "ondblclick",
+            `onDobuleClick("${data.name}", "${data.type}")`
+          );
+          newElement.innerHTML = `<div
                                 class="card-folder m-auto"
                                 id="folder-one"
                                 style="height: 120px; display: flex; justify-content: center; margin: 10px"
                               >
-                                <img
-                                  src="./assets/folder-icon.png"
-                                  class="img-fluid select-asset-list-item mw-90"
-                                  style="max-width: 90%; height: 100%;"
-                                />
+                              ${
+                                data.type === "dir"
+                                  ? `<img
+                                    src="./assets/folder-icon.png"
+                                    class="img-fluid select-asset-list-item mw-90"
+                                    style="max-width: 90%; height: 100%;"
+                                  />`
+                                  : `<img
+                                    src="./assets/file-icon.svg"
+                                    class="img-fluid select-asset-list-item mw-90"
+                                    style="max-width: 90%; height: 100%;"
+                                  />`
+                              }
+
                               </div>
-                              <div class="caption text-center"><p>${data}</p></div>
+                              <div class="caption text-center"><p>${
+                                data.name
+                              }</p></div>
                               `;
-        ElRowFolder.appendChild(newElement);
-      });
+          ElRowFolder.appendChild(newElement);
+        });
+      };
     </script>
   </body>
 </html>
