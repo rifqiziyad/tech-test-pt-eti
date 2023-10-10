@@ -1,14 +1,10 @@
-
-# File Explorer
-
-
+# Web File Explorer
 
 ## Tech Stack
 
 **Client:** HTML, CSS, Bootstrap, Javascript
 
 **Server:** Node, Express
-
 
 ## Run Locally
 
@@ -41,4 +37,3 @@ Start the client
 ```bash
   open Frontend/index.html
 ```
-
